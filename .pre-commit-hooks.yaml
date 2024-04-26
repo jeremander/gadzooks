@@ -1,0 +1,6 @@
+- id: python-loc-summarize
+  name: python-loc-summarize
+  description: Display some LOC (lines of code) metrics for Python code via radon library.
+  entry: scripts/py_loc_summarize.sh
+  language: script
+  args: ["**/*.py"]

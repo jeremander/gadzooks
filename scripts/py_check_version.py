@@ -42,7 +42,7 @@ def check_tag_version(strict: bool = False) -> Optional[str]:
         tag_version = latest_tag.lstrip('v')
         if not VERSION_REGEX.match(tag_version):
             error(f'tag {latest_tag!r} is not a valid version', strict=strict)
-        print(f'Latest version:       {tag_version}')
+        print(f'Tag version:          {tag_version}')
         return tag_version
     error('No tags exist.', strict=strict)
     return None
@@ -52,9 +52,9 @@ def get_pkg_version(path: Path) -> Optional[str]:
     A version string is assumed to be the right-hand side of an expression like `version = '3.7.1'` or `__version__ = '2.3.4'`."""
     with open(path) as f:
         contents = f.read()
-    regex = re.compile(r'\_*version\_*\s*=\s*(' + VERSION_PATTERN + ')')
+    regex = re.compile(r'\_*version\_*\s*=\s*[\'\"](' + VERSION_PATTERN + ')')
     if (match := regex.search(contents)):
-        return match.group()
+        return match.group(1)
     return None
 
 def check_pkg_version(version_path: Path, version: Optional[str], strict: bool = False) -> str:
@@ -65,6 +65,7 @@ def check_pkg_version(version_path: Path, version: Optional[str], strict: bool =
     if pkg_version is None:
         error(f'no package version found in {version_path}')
     assert isinstance(pkg_version, str)
+    print(f'Package version:      {pkg_version}')
     if not VERSION_REGEX.match(pkg_version):
         error(f'package version string {pkg_version!r} is not a valid version')
     if version is None:
@@ -76,7 +77,7 @@ def check_pkg_version(version_path: Path, version: Optional[str], strict: bool =
 def get_latest_built_version(pkg_name: str, dist_dir: str = 'dist') -> Optional[str]:
     """Given the name of the Python package and a dist directory where wheels are built, returns the version string of the latest built wheel."""
     dist_path = Path(dist_dir)
-    if not dist_path.exists():
+    if not dist_path.is_dir():
         return None
     max_version: Optional[tuple[int, ...]] = None
     wheel_pattern = f'{pkg_name}-*.whl'
@@ -92,44 +93,46 @@ def check_latest_built_version(version: str, pkg_name: str, dist_dir: str, stric
     if built_version:
         print(f'Latest built version: {built_version}')
     if (not built_version) or (built_version != version):
-        error(f'latest version has not been built -- remember to build & publish v{version}', strict=strict)
+        error(f'latest version has not been built in {dist_dir} -- remember to build & publish v{version}', strict=strict)
 
 def check_changelog_version(version: str, changelog: Path, changelog_version_regex: str) -> None:
     """Checks that the changelog file contains a line matching a pattern that corresponds to the target version."""
-    pattern_regex = re.compile(changelog_version_regex.format(version))
-    # url_regex = re.compile(r'\[' + str(tag_version) + r'\]:\s*\w+')
+    pattern = changelog_version_regex.format(version=version)
     has_pattern = False
     with open(args.changelog) as f:
         for line in f:
-            if pattern_regex.search(line):
+            if re.search(pattern, line):
                 has_pattern = True
                 break
     if has_pattern:
-        print('Changelog: OK')
+        print(f'Changelog line:       {line}')
     else:
-        error(f'{args.changelog} may not be up-to-date, does not contain a line matching:\n\t{pattern_regex}')
+        error(f'{args.changelog} may not be up-to-date, does not contain a line matching:\n\t{pattern}')
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('pkg_name', help='name of the Python package')
+    parser.add_argument('--pkg-name', help='name of the Python package')
     parser.add_argument('--version-path', type=Path, help='path to file containing current version')
     parser.add_argument('--check-tag', action='store_true', help='check that the latest tag is a valid version')
     parser.add_argument('--check-dist', action='store_true', help='check version of latest built wheel')
-    parser.add_argument('--dist-dir', default='dist', help='directory where package wheels are built')
+    parser.add_argument('--dist-dir', help='directory where package wheels are built')
     parser.add_argument('--changelog', help='changelog file')
     parser.add_argument('--changelog-version-regex', default='{version}', help='pattern to match to find version in changelog file ("{version}" within the pattern marks the target version')
     args = parser.parse_args()
 
+    # by default, assume root directory name matches the package name
+    pkg_name = args.pkg_name or Path.cwd().name.replace('-', '_')
     tag_version = check_tag_version(strict=args.check_tag)
 
-    # by default we assume the package directory is just the package name
-    version_path = args.version_path or Path(args.pkg_name) / '__init__.py'
+    # by default, assume the package directory is a subdirectory with the package name
+    version_path = args.version_path or Path(pkg_name) / '__init__.py'
     pkg_version = check_pkg_version(version_path, tag_version, strict=args.check_tag)
 
-    if args.check_dist:
-        check_latest_built_version(pkg_version, args.pkg_name, args.dist_dir)
+    if args.check_dist or args.dist_dir:
+        dist_dir = args.dist_dir or 'dist'
+        check_latest_built_version(pkg_version, pkg_name, dist_dir, strict=args.check_dist)
 
     if args.changelog:
         check_changelog_version(pkg_version, args.changelog, args.changelog_version_regex)

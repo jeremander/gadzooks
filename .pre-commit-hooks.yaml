@@ -1,3 +1,10 @@
+- id: python-check-version
+  name: python-check-version
+  description: Check for version consistency between package, git tag, latest build, and changelog.
+  entry: scripts/py_check_version.py
+  language: script
+  args: []
+
 - id: python-loc-summarize
   name: python-loc-summarize
   description: Display some LOC (lines of code) metrics for Python code via radon library.

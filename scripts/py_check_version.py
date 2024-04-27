@@ -8,7 +8,9 @@ import sys
 from typing import Optional
 
 
-VERSION_REGEX = re.compile(r'\d+\.\d+\.\d+')
+VERSION_PATTERN = r'\d+\.\d+\.\d+'
+VERSION_REGEX = re.compile(VERSION_PATTERN)
+
 
 def error(msg: str, strict: bool = True) -> None:
     """Prints an error message and exits the program with return code 1.
@@ -45,12 +47,24 @@ def check_tag_version(strict: bool = False) -> Optional[str]:
     error('No tags exist.', strict=strict)
     return None
 
-def check_pkg_version(version: Optional[str], strict: bool = False) -> str:
+def get_pkg_version(path: Path) -> Optional[str]:
+    """Finds the first occurrence of a version string in the given file.
+    A version string is assumed to be the right-hand side of an expression like `version = '3.7.1'` or `__version__ = '2.3.4'`."""
+    with open(path) as f:
+        contents = f.read()
+    regex = re.compile(r'\_*version\_*\s*=\s*(' + VERSION_PATTERN + ')')
+    if (match := regex.search(contents)):
+        return match.group()
+    return None
+
+def check_pkg_version(version_path: Path, version: Optional[str], strict: bool = False) -> str:
     """Checks that the version of the Python package is a valid version string.
     If strict=True, also requires this version to match the target version.
     Returns the package version."""
-    # TODO: check for version pattern in specific file
-    pkg_version = subprocess.check_output(['hatch', 'version'], text=True).strip()
+    pkg_version = get_pkg_version(version_path)
+    if pkg_version is None:
+        error(f'no package version found in {version_path}')
+    assert isinstance(pkg_version, str)
     if not VERSION_REGEX.match(pkg_version):
         error(f'package version string {pkg_version!r} is not a valid version')
     if version is None:
@@ -100,6 +114,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('pkg_name', help='name of the Python package')
+    parser.add_argument('--version-path', type=Path, help='path to file containing current version')
     parser.add_argument('--check-tag', action='store_true', help='check that the latest tag is a valid version')
     parser.add_argument('--check-dist', action='store_true', help='check version of latest built wheel')
     parser.add_argument('--dist-dir', default='dist', help='directory where package wheels are built')
@@ -109,7 +124,9 @@ if __name__ == '__main__':
 
     tag_version = check_tag_version(strict=args.check_tag)
 
-    pkg_version = check_pkg_version(tag_version, strict=args.check_tag)
+    # by default we assume the package directory is just the package name
+    version_path = args.version_path or Path(args.pkg_name) / '__init__.py'
+    pkg_version = check_pkg_version(version_path, tag_version, strict=args.check_tag)
 
     if args.check_dist:
         check_latest_built_version(pkg_version, args.pkg_name, args.dist_dir)

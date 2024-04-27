@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "gadzooks"
 dynamic = ["version"]
-description = 'A collection of code checking tools for Python projects, intended to be used within git hooks.'
+description = "A collection of code maintenance tools for Python projects, intended to be used within git hooks."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"

@@ -1,0 +1,63 @@
+target-version = "py39"
+
+# rules to include
+
+lint.select = ["E", "F"]
+
+lint.extend-select = [
+    "A",  # builtins
+    "ANN",  # annotations
+    "B",  # bugbear
+    "C",  # mccabe (complexity)
+    "C4",  # comprehensions
+    "D",  # docstrings
+    "I",  # isort (import order)
+    "ICN",  # import conventions
+    "PT",  # pytest style
+    "PTH",  # pathlib
+    "RET",  # return statements
+    "RUF100",  # flag unused noqa
+    "T10",  # debugger
+    "UP",  # upgrades
+]
+
+# rules to ignore
+lint.ignore = [
+    "ANN101",  # type annotation for 'self' in method
+    "ANN102",  # type annotation for 'cls' in classmethod
+    "D100",  # module-level docstring
+    "D102",  # method docstring
+    "D205",  # blank line between summary and description
+    "D209",  # newline before closing quotes
+    "D415",  # first line ending with punctuation
+    "E501",  # line length
+    "PTH123",  # Path.open instead of regular open
+]
+
+# paths to exclude
+lint.exclude = [
+    ".venv",
+    "tmp*",
+    "scripts/*",
+]
+
+# ignore unused imports in __init__.py files
+lint.ignore-init-module-imports = true
+
+[lint.per-file-ignores]
+"__init__.py" = ["D104", "F401"]
+# "tests/*" = ["ANN", "D"]
+
+[lint.flake8-pytest-style]
+parametrize-names-type = "list"
+
+[lint.isort]
+# don't separate straight-style and 'from' imports for the same module
+force-sort-within-sections = true
+# number of lines after each import block?
+lines-after-imports = 2
+# whether to order imports by type, rather than strictly alphabetically
+order-by-type = true
+
+[lint.pydocstyle]
+convention = "google"

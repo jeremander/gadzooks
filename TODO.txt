@@ -1,0 +1,8 @@
+- check-version
+    - Tag vs. package: only require them to match if tag is on the current commit
+- PyPI
+- Improve LOC summary
+    - Number of Python files
+    - Better breakdown of stats
+    - Percentages
+- Configure pre-commit hooks

@@ -38,7 +38,7 @@ def get_latest_tag() -> Optional[tuple[str, int]]:
         return (tag, n)
     return None
 
-def check_tag_version(strict: bool = False) -> Optional[str]:
+def check_tag_version(strict: bool = False) -> Optional[tuple[str, int]]:
     """Checks that the latest tag is a valid version (for now, other tags are not allowed).
     Returns the version as a string, or None if there is no tag.
     If strict=True, requires the tag be a valid version."""
@@ -55,7 +55,7 @@ def check_tag_version(strict: bool = False) -> Optional[str]:
         tag_version = latest_tag.lstrip('v')
         if VERSION_REGEX.match(tag_version):
             print(f'Tag version:          {tag_version}')
-            return tag_version
+            return (tag_version, n)
         error(f'tag {latest_tag!r} is not a valid version', strict=strict)
     else:
         error('No tags exist.', strict=strict)
@@ -66,14 +66,14 @@ def get_pkg_version(path: Path) -> Optional[str]:
     A version string is assumed to be the right-hand side of an expression like `version = '3.7.1'` or `__version__ = '2.3.4'`."""
     with open(path) as f:
         contents = f.read()
-    regex = re.compile(r'\_*version\_*\s*=\s*[\'\"](' + VERSION_PATTERN + ')')
+    regex = re.compile(r'\_*version\_*\s*=\s*[\'\"]?(' + VERSION_PATTERN + ')')
     if (match := regex.search(contents)):
         return match.group(1)
     return None
 
-def check_pkg_version(version_path: Path, version: Optional[str], strict: bool = False) -> str:
+def check_pkg_version(version_path: Path, tag_version: Optional[str], check_tag: bool = False) -> str:
     """Checks that the version of the Python package is a valid version string.
-    If strict=True, also requires this version to match the target version.
+    If check_tag=True, also requires this version to match the tag version.
     Returns the package version."""
     pkg_version = get_pkg_version(version_path)
     if pkg_version is None:
@@ -82,10 +82,10 @@ def check_pkg_version(version_path: Path, version: Optional[str], strict: bool =
     print(f'Package version:      {pkg_version}')
     if not VERSION_REGEX.match(pkg_version):
         error(f'package version string {pkg_version!r} is not a valid version')
-    if version is None:
-        error('no version tag to compare with package version', strict=strict)
-    if pkg_version != version:
-        error(f'mismatch between tag version ({version}) and package version ({pkg_version}) -- remember to update tag', strict=strict)
+    if tag_version is None:
+        error('no version tag to compare with package version', strict=check_tag)
+    if pkg_version != tag_version:
+        error(f'mismatch between tag version ({tag_version}) and package version ({pkg_version}) -- remember to update tag', strict=check_tag)
     return pkg_version
 
 def get_latest_built_version(pkg_name: str, dist_dir: str = 'dist') -> Optional[str]:
@@ -141,10 +141,17 @@ class CheckVersion(Subcommand):
     def main(cls, args: Namespace) -> None:
         # by default, assume root directory name matches the package name
         pkg_name = args.pkg_name or Path.cwd().name.replace('-', '_')
-        tag_version = check_tag_version(strict=args.check_tag)
+        result = check_tag_version(strict=args.check_tag)
+        if result is None:
+            tag_version = None
+            check_tag = args.check_tag
+        else:
+            (tag_version, n) = result
+            # only check the tag if it is on the current commit
+            check_tag = args.check_tag and (n == 0)
         # by default, assume the package directory is a subdirectory with the package name
         version_path = args.version_path or Path(pkg_name) / '__init__.py'
-        pkg_version = check_pkg_version(version_path, tag_version, strict=args.check_tag)
+        pkg_version = check_pkg_version(version_path, tag_version, check_tag=check_tag)
         if args.check_dist or args.dist_dir:
             dist_dir = args.dist_dir or 'dist'
             check_latest_built_version(pkg_version, pkg_name, dist_dir, strict=args.check_dist)

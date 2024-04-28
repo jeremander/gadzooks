@@ -1,12 +1,8 @@
 # TODO
 
-## v0.2.1
-
-- README description of hooks
-- PyPI
-
 ## Future
 
+- Be more flexible about version strings
 - `loc-summary`
     - Better breakdown of stats
     - Percentages

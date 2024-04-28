@@ -10,4 +10,4 @@
   description: Display some LOC (lines of code) metrics for Python code via radon library.
   entry: "gadzooks loc-summarize"
   language: python
-  args: ["**/*.py"]
+  args: ["."]

@@ -25,26 +25,50 @@ def parse_version_str(version: str) -> tuple[int, ...]:
     """Parses a version string into an integer tuple."""
     return tuple(map(int, version.split('.')))
 
-def get_latest_tag() -> Optional[str]:
-    """Gets the latest git tag, or None if there is no tag."""
+def _get_latest_tag(abbrev: bool) -> Optional[str]:
+    cmd = ['git', 'describe', '--tags']
+    if abbrev:
+        cmd.append('--abbrev=0')
     try:
-        return subprocess.check_output(['git', 'describe', '--tags', '--abbrev=0'], text=True).strip()
+        return subprocess.check_output(cmd, text=True).strip()
     except subprocess.CalledProcessError:
         return None
+
+def get_latest_tag() -> Optional[tuple[str, int]]:
+    """Gets the latest git tag along with the number of commits behind the current one, or None if there is no tag."""
+    tag = _get_latest_tag(True)
+    if tag:
+        full_tag = _get_latest_tag(False)
+        assert full_tag is not None
+        if full_tag == tag:  # tag is on the current commit
+            return (tag, 0)
+        # otherwise, string contains number of commits past the tag
+        assert full_tag.startswith(tag)
+        n = int(full_tag.removeprefix(tag).lstrip('-').split('-')[0])
+        return (tag, n)
+    return None
 
 def check_tag_version(strict: bool = False) -> Optional[str]:
     """Checks that the latest tag is a valid version (for now, other tags are not allowed).
     Returns the version as a string, or None if there is no tag.
     If strict=True, requires the tag be a valid version."""
-    latest_tag = get_latest_tag()
-    if latest_tag:
-        print(f'Latest tag:           {latest_tag}')
+    result = get_latest_tag()
+    if result:
+        (latest_tag, n) = result
+        if n == 0:
+            msg = 'current commit'
+        elif n == 1:
+            msg = '1 commit ago'
+        else:
+            msg = f'{n} commits ago'
+        print(f'Latest tag:           {latest_tag} ({msg})')
         tag_version = latest_tag.lstrip('v')
-        if not VERSION_REGEX.match(tag_version):
-            error(f'tag {latest_tag!r} is not a valid version', strict=strict)
-        print(f'Tag version:          {tag_version}')
-        return tag_version
-    error('No tags exist.', strict=strict)
+        if VERSION_REGEX.match(tag_version):
+            print(f'Tag version:          {tag_version}')
+            return tag_version
+        error(f'tag {latest_tag!r} is not a valid version', strict=strict)
+    else:
+        error('No tags exist.', strict=strict)
     return None
 
 def get_pkg_version(path: Path) -> Optional[str]:
@@ -75,7 +99,7 @@ def check_pkg_version(version_path: Path, version: Optional[str], strict: bool =
     return pkg_version
 
 def get_latest_built_version(pkg_name: str, dist_dir: str = 'dist') -> Optional[str]:
-    """Given the name of the Python package and a dist directory where wheels are built, returns the version string of the latest built wheel."""
+    """Given the name of the Python package and a local dist directory where wheels are built, returns the version string of the latest built wheel."""
     dist_path = Path(dist_dir)
     if not dist_path.is_dir():
         return None

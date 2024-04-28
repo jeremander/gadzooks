@@ -3,12 +3,11 @@
 ## v0.2.1
 
 - README description of hooks
-- Configure pre-commit hooks withiin this project
+- `loc-summary`: Number of Python files
 - PyPI
 
 ## Future
 
-- Improve LOC summary
-    - Number of Python files
+- `loc-summary`
     - Better breakdown of stats
     - Percentages

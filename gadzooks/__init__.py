@@ -3,17 +3,17 @@ import sys
 from typing import ClassVar
 
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
 
-def error(msg: str, strict: bool = True) -> None:
-    """Prints an error message and exits the program with return code 1.
-    If strict=False, makes it a warning and does not exit."""
-    if strict:
-        print(f'ERROR: {msg}', file=sys.stderr)
-        sys.exit(1)
-    else:
-        print(f'WARNING: {msg}', file=sys.stderr)
+def error(msg: str) -> None:
+    """Prints an error message and exits the program with return code 1."""
+    print(f'ERROR: {msg}', file=sys.stderr)
+    sys.exit(1)
+
+def warning(msg: str) -> None:
+    """Prints a warning message."""
+    print(f'WARNING: {msg}', file=sys.stderr)
 
 
 class Subcommand:

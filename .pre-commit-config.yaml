@@ -28,20 +28,14 @@ repos:
     - id: commitizen
       stages: [commit-msg]
 - repo: https://github.com/jeremander/gadzooks
-  rev: v0.2.0
+  rev: v0.2.2
   hooks:
     - id: loc-summarize
       args: ['.']
       pass_filenames: false
       verbose: true
     - id: check-version
-      args: ['--dist-dir', 'dist']
+      args: ['--dist-name', 'py-gadzooks', '--dist-dir', 'dist']
       pass_filenames: false
       verbose: true
-      stages: [commit]
-      # before pushing, require the git tag match the package version
-    - id: check-version
-      args: ['--check-tag', '--dist-dir', 'dist']
-      pass_filenames: false
-      verbose: true
-      stages: [push]
+      stages: [commit, push]

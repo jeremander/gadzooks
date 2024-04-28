@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "gadzooks"
+name = "py-gadzooks"
 dynamic = ["version"]
 description = "A collection of code maintenance tools for Python projects, intended to be used within git hooks."
 readme = "README.md"
@@ -30,3 +30,13 @@ gadzooks = "gadzooks.main:main"
 
 [tool.hatch.version]
 path = "gadzooks/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "gadzooks"
+]
+
+[tool.hatch.build.targets.wheel]
+include = [
+  "gadzooks"
+]

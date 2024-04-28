@@ -18,7 +18,7 @@ A collection of code maintenance tools for Python projects. These are especially
 ## Installation
 
 ```text
-pip install gadzooks
+pip install py-gadzooks
 ```
 
 Requires Python 3.9 or higher.

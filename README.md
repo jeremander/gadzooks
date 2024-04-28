@@ -1,6 +1,7 @@
 # 🪝 Gadzooks 🪝
 
-[![PyPI - Version](https://img.shields.io/pypi/v/gadzooks)](https://pypi.org/project/gadzooks)
+[![PyPI - Version](https://img.shields.io/pypi/v/py-gadzooks)](https://pypi.org/project/py-gadzooks)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/jeremander/gadzooks/main/LICENSE)
 
 <!-- [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/gadzooks.svg)](https://pypi.org/project/gadzooks) -->
 

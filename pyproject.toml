@@ -21,9 +21,9 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/unknown/gadzooks#readme"
-Issues = "https://github.com/unknown/gadzooks/issues"
-Source = "https://github.com/unknown/gadzooks"
+Documentation = "https://github.com/jeremander/gadzooks#readme"
+Issues = "https://github.com/jeremander/gadzooks/issues"
+Source = "https://github.com/jeremander/gadzooks"
 
 [project.scripts]
 gadzooks = "gadzooks.main:main"

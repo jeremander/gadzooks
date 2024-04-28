@@ -2,24 +2,14 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 import re
 import subprocess
-import sys
 from typing import Optional
 
-from gadzooks import Subcommand
+from gadzooks import Subcommand, error
 
 
 VERSION_PATTERN = r'\d+\.\d+\.\d+'
 VERSION_REGEX = re.compile(VERSION_PATTERN)
 
-
-def error(msg: str, strict: bool = True) -> None:
-    """Prints an error message and exits the program with return code 1.
-    If strict=False, makes it a warning and does not exit."""
-    if strict:
-        print(f'ERROR: {msg}', file=sys.stderr)
-        sys.exit(1)
-    else:
-        print(f'WARNING: {msg}', file=sys.stderr)
 
 def parse_version_str(version: str) -> tuple[int, ...]:
     """Parses a version string into an integer tuple."""

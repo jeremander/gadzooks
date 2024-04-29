@@ -13,8 +13,9 @@ A collection of code maintenance tools for Python projects. These are especially
 
 - [Installation](#installation)
 - [Usage](#usage)
-    - [Check version consistency](#check-version)
     - [Lines of code summary](#loc-summarize)
+    - [Check version consistency](#check-version)
+    - [Build documentation](#build-docs)
 
 ## Installation
 
@@ -32,6 +33,7 @@ Different tools can be called as subcommands, which are as follows:
 
 | Subcommand | Description |
 | ---------- | ----------- |
+| `build-docs` | Build project documentation |
 | `check-version` | Check version consistency |
 | `loc-summarize` | Summarize lines of code |
 
@@ -39,6 +41,34 @@ To view the help and options for a particular subcommand, do:
 
 ```text
 gadzooks <SUBCOMMAND> --help
+```
+
+### `loc-summarize`
+
+Computes various lines-of-code metrics such as LOC (lines of code), LLOC (logical lines of code), and SLOC (source lines of code). Uses the [`radon`](https://radon.readthedocs.io/en/latest/) tool to do this.
+
+The input argument is a path or list of paths to look for Python source files.
+
+Example:
+
+```text
+gadzooks loc-summarize .
+```
+
+Output:
+
+```text
+Checked 4 source file(s)
+
+LINE STATS
+----------
+LOC:             244
+LLOC:            198
+SLOC:            182
+Comments:          6
+Single comments:  15
+Multi:            10
+Blank:            37
 ```
 
 ### `check-version`
@@ -68,33 +98,24 @@ A valid Git tag may be a version string, optionally prefixed with `v`, for examp
 | `--changelog CHANGELOG` | Changelog file | |
 | `--changelog-version-regex` | Pattern to match to find version in changelog file (`{version}` within the pattern marks the target version) | `{version}` |
 
-### `loc-summarize`
+### `build-docs`
 
-Computes various lines-of-code metrics such as LOC (lines of code), LLOC (logical lines of code), and SLOC (source lines of code). Uses the [`radon`](https://radon.readthedocs.io/en/latest/) tool to do this.
+Runs a command to build docs within your project.
 
-The input argument is a path or list of paths to look for Python source files.
+A typical pattern is to build documentation from template files such as Markdown, then save them out as HTML. Often this is done external to source control via some CI process which builds and deploys docs to a website. However, in some cases you may want to commit the built documentation to your Git repo. This is an easy step to forget, so `gadzooks` let you make the action into a `pre-commit` hook.
 
-Example:
-
-```text
-gadzooks loc-summarize .
-```
-
-Output:
+Example usage:
 
 ```text
-Checked 4 source file(s)
-
-LINE STATS
-----------
-LOC:             244
-LLOC:            198
-SLOC:            182
-Comments:          6
-Single comments:  15
-Multi:            10
-Blank:            37
+gadzooks build-docs --src-docs docs -- make docs
 ```
+
+The `--src-docs` option lets you specify which files are the source docs to be built. `gadzooks` will first check if any of these files has changed since the last time the docs were built (by means of a saved checksum file). If none has changed, it will do nothing. Otherwise, it will call the command following the final `--` (in the example above, `make docs`).
+
+| Option | Description | Default |
+| ------ | ----------- | ------- |
+| `--src-docs SRC_DOCS` | Files or directories containing source docs |  |
+| `--checksum-file CHECKSUM_FILE` | File where SHA-1 checksum is stored | `.doc-checksum` |
 
 ## Pre-commit hooks
 

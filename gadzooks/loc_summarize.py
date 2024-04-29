@@ -2,19 +2,20 @@ from argparse import ArgumentParser, Namespace
 import glob
 import itertools
 import subprocess
+from typing import Optional
 
 from gadzooks import Subcommand
 
 
 class LinesOfCodeSummarize(Subcommand):
-    """summarize lines of code in a Python project"""
+    """summarize lines of code"""
 
     @classmethod
     def configure_parser(cls, parser: ArgumentParser) -> None:
         parser.add_argument('source_files', nargs='*', help='Python files to check')
 
     @classmethod
-    def main(cls, args: Namespace) -> None:
+    def main(cls, args: Namespace, extra_args: Optional[list] = None) -> None:
         paths = list(itertools.chain.from_iterable(map(glob.glob, args.source_files)))
         if not paths:
             print('No source files to check')

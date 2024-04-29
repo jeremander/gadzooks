@@ -38,4 +38,10 @@ repos:
       args: ['--dist-name', 'py-gadzooks', '--dist-dir', 'dist']
       pass_filenames: false
       verbose: true
-      stages: [commit, push]
+      stages: [commit]
+      # before pushing, require the git tag match the package version
+    - id: check-version
+      args: ['--check-tag', '--dist-dir', 'dist']
+      pass_filenames: false
+      verbose: true
+      stages: [push]

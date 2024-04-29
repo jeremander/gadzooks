@@ -38,9 +38,9 @@ def get_latest_tag() -> Optional[tuple[str, int]]:
         return (tag, n)
     return None
 
-def check_tag_version() -> Optional[tuple[str, int]]:
+def check_tag_version() -> Optional[str]:
     """Checks that the latest tag is a valid version (for now, other tags are not allowed).
-    Returns the version as a string, or None if there is no tag."""
+    If a valid tag exists, returns the version; otherwise, issues a warning and returns None."""
     result = get_latest_tag()
     if result:
         (latest_tag, n) = result
@@ -54,7 +54,7 @@ def check_tag_version() -> Optional[tuple[str, int]]:
         tag_version = latest_tag.lstrip('v')
         if VERSION_REGEX.match(tag_version):
             print(f'Tag version:          {tag_version}')
-            return (tag_version, n)
+            return tag_version
         warning(f'tag {latest_tag!r} is not a valid version')
     else:
         warning('no tags exist')
@@ -72,7 +72,6 @@ def get_pkg_version(path: Path) -> Optional[str]:
 
 def check_pkg_version(version_path: Path) -> str:
     """Checks that the version of the Python package is a valid version string.
-    If check_tag=True, also requires this version to match the tag version.
     Returns the package version."""
     pkg_version = get_pkg_version(version_path)
     if pkg_version is None:
@@ -135,33 +134,28 @@ def check_changelog_version(version: str, changelog: Path, changelog_version_reg
 
 
 class CheckVersion(Subcommand):
-    """check version consistency in a Python project"""
+    """check version consistency"""
 
     @classmethod
     def configure_parser(cls, parser: ArgumentParser) -> None:
         parser.add_argument('--pkg-name', help='name of the Python package')
         parser.add_argument('--dist-name', help='name of the PyPI distribution')
         parser.add_argument('--version-path', type=Path, help='path to file containing current version')
+        parser.add_argument('--check-tag', action='store_true', help='check that the latest tag is a valid version')
         parser.add_argument('--check-dist', action='store_true', help='check version of latest built wheel')
         parser.add_argument('--dist-dir', help='directory where package wheels are built')
         parser.add_argument('--changelog', help='changelog file')
         parser.add_argument('--changelog-version-regex', default='{version}', help='pattern to match to find version in changelog file ("{version}" within the pattern marks the target version')
 
     @classmethod
-    def main(cls, args: Namespace) -> None:
+    def main(cls, args: Namespace, extra_args: Optional[list[str]] = None) -> None:
         # by default, assume root directory name matches the package name
         pkg_name = args.pkg_name or Path.cwd().name.replace('-', '_')
         # by default, assume the package directory is a subdirectory with the package name
         version_path = args.version_path or Path(pkg_name) / '__init__.py'
         pkg_version = check_pkg_version(version_path)
-        result = check_tag_version()
-        if result is None:
-            tag_version = None
-            tag_is_current = False
-        else:
-            (tag_version, n) = result
-            tag_is_current = (n == 0)
-        if tag_is_current:
+        tag_version = check_tag_version()
+        if args.check_tag:
             check_pkg_tag_consistency(pkg_version, tag_version)
         if args.check_dist or args.dist_dir:
             dist_dir = args.dist_dir or 'dist'
@@ -170,4 +164,4 @@ class CheckVersion(Subcommand):
             if tag_version:
                 check_built_tag_consistency(built_version, tag_version, dist_dir)
         if args.changelog:
-            check_changelog_version(pkg_version, args.changelog, args.changelog_version_regex, strict=tag_is_current)
+            check_changelog_version(pkg_version, args.changelog, args.changelog_version_regex, strict=args.check_tag)

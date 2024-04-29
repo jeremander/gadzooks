@@ -1,3 +1,10 @@
+- id: build-docs
+  name: build-docs
+  description: Build project documentation.
+  entry: "gadzooks build-docs"
+  language: python
+  args: []
+
 - id: check-version
   name: check-version
   description: Check for version consistency between package, git tag, latest build, and changelog.

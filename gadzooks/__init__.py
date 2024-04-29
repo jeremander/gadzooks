@@ -1,9 +1,9 @@
 from argparse import ArgumentParser, Namespace
 import sys
-from typing import ClassVar
+from typing import ClassVar, Optional
 
 
-__version__ = '0.2.3'
+__version__ = '0.2.4'
 
 
 def error(msg: str) -> None:
@@ -24,5 +24,5 @@ class Subcommand:
         """Configures an argument parser."""
 
     @classmethod
-    def main(cls, args: Namespace) -> None:
+    def main(cls, args: Namespace, extra_args: Optional[list[str]] = None) -> None:
         """Runs the main logic of the subcommand, given parsed arguments."""

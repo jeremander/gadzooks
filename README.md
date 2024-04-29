@@ -62,6 +62,7 @@ A valid Git tag may be a version string, optionally prefixed with `v`, for examp
 | `--pkg-name PKG_NAME` | Name of package | Current directory |
 | `--dist-name DIST_NAME` | Name of PyPI distribution | `<PKG_NAME>` |
 | `--version-path VERSION_PATH` | Path to file where package version is defined | `<PKG_NAME>/__init__.py` |
+| `--check-tag` | Check that latest tag is valid | |
 | `--check-dist` | Check version of latest built wheel | |
 | `--dist-dir DIST_DIR` | Directory where wheels are built | `dist` |
 | `--changelog CHANGELOG` | Changelog file | |
@@ -111,11 +112,12 @@ Here is an example of a section of a `.pre-commit-config.yaml` file:
       args: ['.']
       pass_filenames: false
       verbose: true
+      # before pushing, require the git tag match the package version
     - id: check-version
-      args: []
+      args: ['--check-tag']
       pass_filenames: false
       verbose: true
-      stages: [commit, push]
+      stages: [push]
 ```
 
 ## License

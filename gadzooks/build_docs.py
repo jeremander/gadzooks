@@ -1,5 +1,6 @@
 from argparse import ArgumentParser, Namespace
 import binascii
+from collections.abc import Sequence
 import hashlib
 from pathlib import Path
 import subprocess
@@ -17,6 +18,18 @@ def xor_bytes(hashes: list[bytes]) -> bytes:
             arr[i] = b ^ h[i]
     return binascii.hexlify(bytes(arr))
 
+def get_file_checksum(paths: Sequence[Path]) -> str:
+    """Computes the checksum of some files, returning it as a hex string."""
+    print(f'computing checksum of {len(paths)} file(s)')
+    cmd = ['sha1sum'] + list(map(str, paths))
+    lines = subprocess.check_output(cmd, text=True).splitlines()
+    hashes = []
+    for line in lines:
+        [content_hash, name] = line.split()
+        name_hash = hashlib.sha1(name.encode()).hexdigest()
+    hashes += list(map(binascii.unhexlify, [name_hash, content_hash]))
+    return xor_bytes(hashes).decode()
+
 
 class BuildDocs(Subcommand):
     """build project documentation"""
@@ -25,42 +38,36 @@ class BuildDocs(Subcommand):
     def configure_parser(cls, parser: ArgumentParser) -> None:
         parser.add_argument('--src-docs', nargs='*', help='path(s) to input docs (will use checksum to decide whether to rebuild)')
         parser.add_argument('--checksum-file', type=Path, default='.doc-checksum', help='checksum file')
+        parser.add_argument('-f', '--force', action='store_true', help='force rebuild')
 
     @classmethod
     def main(cls, args: Namespace, extra_args: Optional[list[str]] = None) -> None:
         if not extra_args:
             error('must provide: -- <BUILD_DOCS_COMMAND>')
         assert isinstance(extra_args, list)
-        paths: list[Path] = []
-        for path in args.src_docs:
-            path = Path(path)
-            if path.is_dir():
-                paths.extend([p for p in path.rglob('*') if p.is_file()])
-            else:
-                paths.append(path)
-        if paths:
-            print(f'computing checksum of {len(paths)} file(s)')
-            cmd = ['sha1sum'] + list(map(str, paths))
-            lines = subprocess.check_output(cmd, text=True).splitlines()
-            hashes = []
-            for line in lines:
-                [content_hash, name] = line.split()
-                name_hash = hashlib.sha1(name.encode()).hexdigest()
-            hashes += list(map(binascii.unhexlify, [name_hash, content_hash]))
-            checksum = xor_bytes(hashes).decode()
+        if args.force:
+            rebuild = True
+            print('force rebuilding docs')
         else:
-            checksum = None
-        rebuild = True
-        if args.checksum_file.exists():
-            with open(args.checksum_file) as f:
-                prev_checksum = f.read().strip()
-            if checksum == prev_checksum:
-                print(f'checksum matches {args.checksum_file} -- source docs are unchanged')
-                rebuild = False
+            paths: list[Path] = []
+            for path in args.src_docs:
+                path = Path(path)
+                if path.is_dir():
+                    paths.extend([p for p in path.rglob('*') if p.is_file()])
+                else:
+                    paths.append(path)
+            checksum = get_file_checksum(paths) if paths else None
+            rebuild = True
+            if args.checksum_file.exists():
+                with open(args.checksum_file) as f:
+                    prev_checksum = f.read().strip()
+                if checksum == prev_checksum:
+                    print(f'checksum matches {args.checksum_file} -- source docs are unchanged')
+                    rebuild = False
+                else:
+                    print('source docs have changed... rebuilding')
             else:
-                print('source docs have changed... rebuilding')
-        else:
-            print('no checksum file found... rebuilding')
+                print('no checksum file found... rebuilding')
         if rebuild:
             print(' '.join(extra_args))
             subprocess.run(extra_args)

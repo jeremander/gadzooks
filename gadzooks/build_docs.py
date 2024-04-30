@@ -18,7 +18,7 @@ def xor_bytes(hashes: list[bytes]) -> bytes:
             arr[i] = b ^ h[i]
     return binascii.hexlify(bytes(arr))
 
-def get_file_checksum(paths: Sequence[Path]) -> str:
+def get_file_checksum(paths: Sequence[Path], verbose: bool = False) -> str:
     """Computes the checksum of some files, returning it as a hex string."""
     print(f'computing checksum of {len(paths)} file(s)')
     cmd = ['sha1sum'] + list(map(str, paths))
@@ -27,7 +27,9 @@ def get_file_checksum(paths: Sequence[Path]) -> str:
     for line in lines:
         [content_hash, name] = line.split()
         name_hash = hashlib.sha1(name.encode()).hexdigest()
-    hashes += list(map(binascii.unhexlify, [name_hash, content_hash]))
+        hashes += list(map(binascii.unhexlify, [name_hash, content_hash]))
+        if verbose:
+            print(line)
     return xor_bytes(hashes).decode()
 
 
@@ -39,38 +41,38 @@ class BuildDocs(Subcommand):
         parser.add_argument('--src-docs', nargs='*', help='path(s) to input docs (will use checksum to decide whether to rebuild)')
         parser.add_argument('--checksum-file', type=Path, default='.doc-checksum', help='checksum file')
         parser.add_argument('-f', '--force', action='store_true', help='force rebuild')
+        parser.add_argument('-v', '--verbose', action='store_true', help='print out filenames and hashes')
 
     @classmethod
     def main(cls, args: Namespace, extra_args: Optional[list[str]] = None) -> None:
         if not extra_args:
             error('must provide: -- <BUILD_DOCS_COMMAND>')
         assert isinstance(extra_args, list)
-        if args.force:
-            rebuild = True
-            print('force rebuilding docs')
-        else:
-            paths: list[Path] = []
-            for path in args.src_docs:
-                path = Path(path)
-                if path.is_dir():
-                    paths.extend([p for p in path.rglob('*') if p.is_file()])
-                else:
-                    paths.append(path)
-            checksum = get_file_checksum(paths) if paths else None
-            rebuild = True
-            if args.checksum_file.exists():
-                with open(args.checksum_file) as f:
-                    prev_checksum = f.read().strip()
-                if checksum == prev_checksum:
-                    print(f'checksum matches {args.checksum_file} -- source docs are unchanged')
-                    rebuild = False
-                else:
-                    print('source docs have changed... rebuilding')
+        paths: list[Path] = []
+        for path in args.src_docs:
+            path = Path(path)
+            if path.is_dir():
+                paths.extend([p for p in path.rglob('*') if p.is_file()])
             else:
-                print('no checksum file found... rebuilding')
+                paths.append(path)
+        checksum = get_file_checksum(paths, verbose=args.verbose) if paths else None
+        rebuild = True
+        if args.force:
+            print('force rebuilding docs')
+        elif args.checksum_file.exists():
+            with open(args.checksum_file) as f:
+                prev_checksum = f.read().strip()
+            if checksum == prev_checksum:
+                print(f'checksum matches {args.checksum_file} -- source docs are unchanged')
+                rebuild = False
+            else:
+                print('source docs have changed... rebuilding')
+        else:
+            print('no checksum file found... rebuilding')
         if rebuild:
             print(' '.join(extra_args))
             subprocess.run(extra_args)
             if checksum:
                 with open(args.checksum_file, 'w') as f:
                     print(checksum, file=f)
+                print(f'saved checksum to {args.checksum_file}')

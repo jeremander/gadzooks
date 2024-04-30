@@ -3,7 +3,7 @@ import sys
 from typing import ClassVar, Optional
 
 
-__version__ = '0.2.5'
+__version__ = '0.2.6'
 
 
 def error(msg: str) -> None:

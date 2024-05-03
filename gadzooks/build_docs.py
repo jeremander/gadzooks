@@ -38,14 +38,15 @@ class BuildDocs(Subcommand):
 
     @classmethod
     def configure_parser(cls, parser: ArgumentParser) -> None:
-        parser.add_argument('--src-docs', nargs='*', help='path(s) to input docs (will use checksum to decide whether to rebuild)')
+        parser.add_argument('--src-docs', nargs='+', required=True, help='path(s) to input docs (will use checksum to decide whether to rebuild)')
         parser.add_argument('--checksum-file', type=Path, default='.doc-checksum', help='checksum file')
         parser.add_argument('-f', '--force', action='store_true', help='force rebuild')
+        parser.add_argument('--check-only', action='store_true', help='only check whether input docs have changed (do not rebuild)')
         parser.add_argument('-v', '--verbose', action='store_true', help='print out filenames and hashes')
 
     @classmethod
     def main(cls, args: Namespace, extra_args: Optional[list[str]] = None) -> None:
-        if not extra_args:
+        if not (args.check_only or extra_args):
             error('must provide: -- <BUILD_DOCS_COMMAND>')
         assert isinstance(extra_args, list)
         paths: list[Path] = []
@@ -56,23 +57,29 @@ class BuildDocs(Subcommand):
             else:
                 paths.append(path)
         checksum = get_file_checksum(paths, verbose=args.verbose) if paths else None
-        rebuild = True
+        msg = None
         if args.force:
-            print('force rebuilding docs')
+            pass
         elif args.checksum_file.exists():
             with open(args.checksum_file) as f:
                 prev_checksum = f.read().strip()
             if checksum == prev_checksum:
                 print(f'checksum matches {args.checksum_file} -- source docs are unchanged')
-                rebuild = False
-            else:
-                print('source docs have changed... rebuilding')
+                return
+            msg = 'source docs have changed'
         else:
-            print('no checksum file found... rebuilding')
-        if rebuild:
-            print(' '.join(extra_args))
-            subprocess.run(extra_args)
-            if checksum:
-                with open(args.checksum_file, 'w') as f:
-                    print(checksum, file=f)
-                print(f'saved checksum to {args.checksum_file}')
+            msg = 'no checksum file found'
+        if args.check_only:
+            print(f'\033[1;33mWARNING: {msg}')
+            return
+        print(msg)
+        msg = 'rebuilding docs...'
+        if args.force:
+            msg = 'force ' + msg
+        print(msg)
+        print(' '.join(extra_args))
+        subprocess.run(extra_args)
+        if checksum:
+            with open(args.checksum_file, 'w') as f:
+                print(checksum, file=f)
+            print(f'saved checksum to {args.checksum_file}')

@@ -3,7 +3,7 @@ import sys
 from typing import ClassVar, Optional
 
 
-__version__ = '0.2.7'
+__version__ = '0.2.8'
 
 
 def error(msg: str) -> None:
@@ -13,7 +13,7 @@ def error(msg: str) -> None:
 
 def warning(msg: str) -> None:
     """Prints a warning message."""
-    print(f'WARNING: {msg}', file=sys.stderr)
+    print(f'\033[1;33mWARNING: {msg}\x1b[0m', file=sys.stderr)
 
 
 class Subcommand:

@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 from typing import Optional
 
-from gadzooks import Subcommand, error
+from gadzooks import Subcommand, error, warning
 
 
 def xor_bytes(hashes: list[bytes]) -> bytes:
@@ -69,8 +69,8 @@ class BuildDocs(Subcommand):
             msg = 'source docs have changed'
         else:
             msg = 'no checksum file found'
-        if args.check_only:
-            print(f'\033[1;33mWARNING: {msg}')
+        if msg and args.check_only:
+            warning(msg)
             return
         print(msg)
         msg = 'rebuilding docs...'

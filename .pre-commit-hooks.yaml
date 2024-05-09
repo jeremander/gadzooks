@@ -5,6 +5,13 @@
   language: python
   args: []
 
+- id: check-format
+  name: check-format
+  description: Check formatting of Python code using an installed code formatter.
+  entry: "gadzooks check-format"
+  language: python
+  args: ["."]
+
 - id: check-version
   name: check-version
   description: Check for version consistency between package, git tag, latest build, and changelog.

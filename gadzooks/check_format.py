@@ -98,13 +98,13 @@ class DiffFilter:
 
 
 class CheckFormat(Subcommand):
-    """check code format"""
+    """check code formatting"""
 
     @classmethod
     def configure_parser(cls, parser: ArgumentParser) -> None:
         parser.add_argument('files', nargs='+', help='sources files to check')
-        parser.add_argument('--ignore-patterns', nargs='+', help='regular expression(s) to ignore in diffs')
         parser.add_argument('--formatter', choices=list(FORMATTERS), default='black', help='name of formatter executable')
+        parser.add_argument('--ignore-patterns', nargs='+', help='regular expression(s) to ignore in diffs')
 
     @classmethod
     def main(cls, args: Namespace, extra_args: Optional[list[str]] = None) -> None:

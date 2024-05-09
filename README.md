@@ -15,6 +15,7 @@ A collection of code maintenance tools for Python projects. These are especially
 - [Usage](#usage)
     - [Lines of code summary](#loc-summarize)
     - [Check version consistency](#check-version)
+    - [Check code formatting](#check-format)
     - [Build documentation](#build-docs)
 
 ## Installation
@@ -34,6 +35,7 @@ Different tools can be called as subcommands, which are as follows:
 | Subcommand | Description |
 | ---------- | ----------- |
 | `build-docs` | Build project documentation |
+| `check-format` | Check code formatting |
 | `check-version` | Check version consistency |
 | `loc-summarize` | Summarize lines of code |
 
@@ -97,6 +99,32 @@ A valid Git tag may be a version string, optionally prefixed with `v`, for examp
 | `--dist-dir DIST_DIR` | Directory where wheels are built | `dist` |
 | `--changelog CHANGELOG` | Changelog file | |
 | `--changelog-version-regex` | Pattern to match to find version in changelog file (`{version}` within the pattern marks the target version) | `{version}` |
+
+### `check-format`
+
+Runs an installed code formatter on source files. Currently supported formatters (for Python code only) are:
+
+- [Black](https://black.readthedocs.io/en/stable/)
+- [Ruff](https://docs.astral.sh/ruff/formatter)
+- [Yapf](https://github.com/google/yapf)
+
+Example usage:
+
+```text
+gadzooks check-format . --formatter black --ignore-patterns "\s*" -- --line-length 120 --skip-string-normalization
+```
+
+If `--` is present, the arguments that come before it are `gadzooks`' arguments; those that come after it are passed to the formatter program.
+
+`check-format` does not (by default) edit the code in place, but rather prints out a stream of _diffs_ indicating what formatting changes would be made. The user may choose to apply the changes or not.
+
+The program exits with return code 1 if there are any changes, and 0 otherwise.
+
+| Option | Description | Default |
+| ------ | ----------- | ------- |
+| (positional) | Files or directories to check | (required) |
+| `--formatter` | Formatter program (`black`, `ruff`, or `yapf`) | `black` |
+| `--ignore-patterns` | One or more regular expressions that will be ignored in the diffs (e.g. `"\s*"` ignores changes where whitespace lines are added or removed) | |
 
 ### `build-docs`
 

@@ -5,12 +5,14 @@ from typing import cast
 
 from gadzooks import Subcommand, __version__
 from gadzooks.build_docs import BuildDocs
+from gadzooks.check_format import CheckFormat
 from gadzooks.check_version import CheckVersion
 from gadzooks.loc_summarize import LinesOfCodeSummarize
 
 
 SUBCOMMANDS: dict[str, type[Subcommand]] = {
     'build-docs': BuildDocs,
+    'check-format': CheckFormat,
     'check-version': CheckVersion,
     'loc-summarize': LinesOfCodeSummarize,
 }

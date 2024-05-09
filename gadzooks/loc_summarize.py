@@ -27,7 +27,7 @@ class LinesOfCodeSummarize(Subcommand):
         print(f'Checked {num_files} source file(s)\n')
         print('LINE STATS')
         print('----------')
-        pairs = [line.strip().split(": ", maxsplit=1) for line in lines[-11:-4]]  # type: ignore[misc]
+        pairs = [line.strip().split(': ', maxsplit=1) for line in lines[-11:-4]]  # type: ignore[misc]
         width = len(pairs[0][1])
         for (key, val) in pairs:
             key = (key + ':').ljust(16)
